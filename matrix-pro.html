@@ -50,6 +50,7 @@
             pointer-events: none;
         }
         
+        
     </style>
 </head>
 <body>
@@ -167,6 +168,7 @@
                 
                 this.update();
                 this.draw();
+                this.drawHeartsClean(); // Vẽ trái tim/lá thư sau khi vẽ matrix
                 this.animationId = requestAnimationFrame(() => this.animate());
             }
             
@@ -211,10 +213,15 @@
                         column.opacity = Math.random() * 0.5 + 0.5;
                     }
                 });
+                
+                // Cập nhật trái tim
+                if (this.updateHearts) {
+                    this.updateHearts();
+                }
             }
             
             draw() {
-                // Clear canvas with fade effect - sử dụng màu trắng nhạt cho background sáng
+                // Clear canvas với fade effect - sử dụng màu trắng nhạt cho background sáng
                 this.ctx.fillStyle = `rgba(255, 240, 245, ${0.08 * this.settings.brightness})`;
                 this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
                 
@@ -245,6 +252,13 @@
                         );
                     });
                 });
+            }
+            
+            // Vẽ trái tim/lá thư riêng biệt để không bị trail
+            drawHeartsClean() {
+                if (this.drawHearts) {
+                    this.drawHearts();
+                }
             }
             
             getRandomColor() {
@@ -319,6 +333,64 @@
         // Initialize and start immediately
         matrixEffect = new MyMatrixEffect(canvas);
         matrixEffect.start();
+        
+        // Thêm hiệu ứng trái tim và lá thư vào matrix effect
+        matrixEffect.hearts = [];
+        matrixEffect.icons = ['❤️', '💌']; // Trái tim và lá thư
+        
+        // Tạo icon mới (trái tim hoặc lá thư)
+        matrixEffect.createHeart = function() {
+            const heart = {
+                x: Math.random() * this.canvas.width,
+                y: this.canvas.height + 20,
+                vx: (Math.random() - 0.5) * 0.5, // Chuyển động ngang nhiều hơn
+                vy: -Math.random() * 1.5 - 0.8, // Bay lên nhanh hơn
+                size: Math.random() * 8 + 8, // Thu nhỏ icon
+                life: 1.0,
+                decay: Math.random() * 0.002 + 0.001,
+                icon: this.icons[Math.floor(Math.random() * this.icons.length)] // Random giữa trái tim và lá thư
+            };
+            this.hearts.push(heart);
+        };
+        
+        // Cập nhật trái tim
+        matrixEffect.updateHearts = function() {
+            for (let i = this.hearts.length - 1; i >= 0; i--) {
+                const heart = this.hearts[i];
+                
+                // Cập nhật vị trí - bay basic đơn giản
+                heart.x += heart.vx;
+                heart.y += heart.vy;
+                
+                // Giảm life
+                heart.life -= heart.decay;
+                
+                // Xóa trái tim khi hết life hoặc ra khỏi màn hình
+                if (heart.life <= 0 || heart.y < -50) {
+                    this.hearts.splice(i, 1);
+                }
+            }
+            
+            // Tạo trái tim mới ngẫu nhiên - nhiều hơn
+            if (Math.random() < 0.02 && this.hearts.length < 12) {
+                this.createHeart();
+            }
+        };
+        
+        // Vẽ icon (trái tim và lá thư)
+        matrixEffect.drawHearts = function() {
+            this.hearts.forEach(heart => {
+                const alpha = heart.life;
+                const size = heart.size;
+                
+                // Vẽ icon basic - màu hồng đậm, sáng rõ
+                this.ctx.font = `${size}px Arial, sans-serif`;
+                this.ctx.textAlign = 'center';
+                this.ctx.textBaseline = 'middle';
+                this.ctx.fillStyle = `rgba(220, 38, 127, ${alpha * 1.2})`; // Tăng độ sáng
+                this.ctx.fillText(heart.icon, heart.x, heart.y);
+            });
+        };
     </script>
 
     <!-- Text Animation Script -->
@@ -726,5 +798,6 @@
             textAnimation.animate(textSequence);
         });
     </script>
+
 </body>
 </html>
