@@ -3,185 +3,305 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Phần Mở Đầu Lộng Lẫy - Chúc Mừng 20/10</title>
+    <title>My Matrix Effect</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
+        
         body {
-            background: linear-gradient(135deg, #ffeef8, #fce4ec, #f8bbd9, #f48fb1);
-            overflow: hidden;
+            background: #000;
+            color: #0f0;
             font-family: 'Courier New', monospace;
-            animation: backgroundShift 10s ease-in-out infinite alternate;
+            overflow: hidden;
+            height: 100vh;
         }
         
-        @keyframes backgroundShift {
-            0% { background: linear-gradient(135deg, #ffeef8, #fce4ec, #f8bbd9, #f48fb1); }
-            50% { background: linear-gradient(135deg, #fce4ec, #f8bbd9, #f48fb1, #e91e63); }
-            100% { background: linear-gradient(135deg, #f8bbd9, #f48fb1, #e91e63, #ad1457); }
+        .container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(45deg, #000, #001100, #000);
         }
         
-        /* Hiệu ứng trái tim bay */
-        .floating-hearts {
-            position: fixed;
+        #matrixCanvas {
+            position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            pointer-events: none;
             z-index: 1;
         }
         
-        .heart {
-            position: absolute;
-            color: #e91e63;
-            font-size: 20px;
-            animation: float 6s infinite linear;
-            opacity: 0.7;
-        }
-        
-        @keyframes float {
-            0% {
-                transform: translateY(100vh) rotate(0deg);
-                opacity: 0;
-            }
-            10% {
-                opacity: 0.7;
-            }
-            90% {
-                opacity: 0.7;
-            }
-            100% {
-                transform: translateY(-100px) rotate(360deg);
-                opacity: 0;
-            }
-        }
-        canvas {
-            display: block;
-            width: 100%;
-            height: 100vh;
-            transition: opacity 2s ease-out;
-        }
-        
-        #text-canvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            z-index: 5;
-            pointer-events: none;
-        }
     </style>
 </head>
 <body>
-    <div class="floating-hearts" id="floating-hearts"></div>
-    <canvas id="c"></canvas>
-    <canvas id="text-canvas"></canvas>
-    <audio id="bg-music" autoplay loop>
-        <source src="https://freesound.org/data/previews/171/171104_3051519-lq.mp3" type="audio/mpeg">
-        <!-- Nhạc piano nhẹ từ freesound.org, thay bằng link nhạc thực tế nếu cần -->
-    </audio>
-    <!-- Tích hợp file text-animation.js -->
-    <script src="text-animation.js"></script>
-    
-    <script>
-        // Khởi tạo các canvas
-        const canvas = document.getElementById('c');
-        const ctx = canvas.getContext('2d');
+    <div class="container">
+        <canvas id="matrixCanvas"></canvas>
         
-        // Khởi tạo text animation bằng hàm tiện ích
-        const textAnim = createTextAnimation('#text-canvas', {
-            dotColor: { r: 233, g: 30, b: 99, a: 0.8 }, // Màu hồng
-            fontSize: 250,
-            fontFamily: 'Arial, sans-serif', // Font hỗ trợ tiếng Việt tốt hơn
-            gap: 10, // Tăng gap một chút
-            dotSize: 3 // Thu nhỏ chấm tròn
-        });
-        
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-        
-        const msg = "CHÚC MỪNG 20-10 ♥ NGÀY PHỤ NỮ VIỆT NAM ♥ HAPPY WOMEN'S DAY ♥ ";
-        const fontSize = 14;
-        const cols = Math.floor(canvas.width / fontSize);
-        const drops = Array(cols).fill(0).map(() => ({
-            y: Math.floor(Math.random() * -50), // Bắt đầu từ trên màn hình
-            offset: Math.random() * Math.PI * 2,
-            speed: 0.5 + Math.random() * 0.5
-        }));
-        
-        // Tạo gradient màu lung linh (từ trên xuống)
-        const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-        gradient.addColorStop(0, '#ffd700'); // Vàng nhạt (trên)
-        gradient.addColorStop(0.5, '#800080'); // Tím (giữa)
-        gradient.addColorStop(1, '#ff1493'); // Hồng (dưới)
-        
+    </div>
 
-        function draw() {
-            ctx.fillStyle = 'rgba(255, 240, 248, 0.08)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.font = fontSize + 'px Courier New';
-            ctx.shadowColor = '#ff1493';
-            ctx.shadowBlur = 10;
+    <script>
+        // ============================================================================
+        // MY MATRIX EFFECT CLASS
+        // ============================================================================
+        
+        class MyMatrixEffect {
+            constructor(canvas) {
+                this.canvas = canvas;
+                this.ctx = canvas.getContext('2d');
+                this.isRunning = false;
+                this.animationId = null;
+                this.startTime = 0;
+                
+                // Effect settings
+                this.settings = {
+                    speed: 1.5, // Tốc độ nhanh
+                    density: 0.8,
+                    brightness: 0.8,
+                    fontSize: 18,
+                    columns: [],
+                    chars: '01ABCDEFGHIJKLMNOPQRSTUVWXYZ' // Ký tự Matrix thông thường
+                };
+                
+                this.init();
+            }
             
-            // Vẽ ký tự xoáy 3D
-            for (let i = 0; i < drops.length; i++) {
-                ctx.fillStyle = gradient;
-                const char = msg[Math.floor(Math.random() * msg.length)];
-                const angle = drops[i].offset + drops[i].y / 15;
-                const x = i * fontSize + Math.sin(angle) * fontSize * 3;
-                const y = drops[i].y * fontSize;
+            init() {
+                this.setupCanvas();
+                this.setupColumns();
+                this.setupEventListeners();
+            }
+            
+            setupCanvas() {
+                this.canvas.width = window.innerWidth;
+                this.canvas.height = window.innerHeight;
                 
-                // Hiển thị chữ bình thường
-                ctx.fillText(char, x, y);
+                window.addEventListener('resize', () => {
+                    this.canvas.width = window.innerWidth;
+                    this.canvas.height = window.innerHeight;
+                    this.setupColumns();
+                });
+            }
+            
+            setupColumns() {
+                this.settings.columns = [];
+                const numColumns = Math.floor(this.canvas.width / this.settings.fontSize);
                 
-                drops[i].y += drops[i].speed; // Rơi từ trên xuống
-                drops[i].offset += 0.05;
-                
-                if (y > canvas.height && Math.random() > 0.975) {
-                    drops[i].y = Math.floor(Math.random() * -50);
-                    drops[i].offset = Math.random() * Math.PI * 2;
-                    drops[i].speed = 0.5 + Math.random() * 0.5;
+                for (let i = 0; i < numColumns; i++) {
+                    this.settings.columns.push({
+                        x: i * this.settings.fontSize,
+                        y: Math.random() * this.canvas.height,
+                        speed: Math.random() * 2 + 1,
+                        chars: [],
+                        nextChar: Math.random() * 50,
+                        opacity: Math.random() * 0.5 + 0.5
+                    });
                 }
             }
             
+            setupEventListeners() {
+                // Keyboard shortcuts
+                document.addEventListener('keydown', (e) => {
+                    switch(e.key) {
+                        case ' ':
+                            e.preventDefault();
+                            this.toggle();
+                            break;
+                        case 'f':
+                        case 'F':
+                            this.toggleFullscreen();
+                            break;
+                        case 'Escape':
+                            if (document.fullscreenElement) {
+                                document.exitFullscreen();
+                            }
+                            break;
+                    }
+                });
+            }
             
-            ctx.shadowBlur = 0; // Tắt glow
+            start() {
+                if (this.isRunning) return;
+                
+                this.isRunning = true;
+                this.startTime = performance.now();
+                this.animate();
+            }
+            
+            stop() {
+                this.isRunning = false;
+                if (this.animationId) {
+                    cancelAnimationFrame(this.animationId);
+                    this.animationId = null;
+                }
+            }
+            
+            toggle() {
+                if (this.isRunning) {
+                    this.stop();
+                } else {
+                    this.start();
+                }
+            }
+            
+            animate() {
+                if (!this.isRunning) return;
+                
+                this.update();
+                this.draw();
+                this.animationId = requestAnimationFrame(() => this.animate());
+            }
+            
+            update() {
+                const time = (performance.now() - this.startTime) / 1000;
+                
+                this.settings.columns.forEach(column => {
+                    // Update column position
+                    column.y += column.speed * this.settings.speed;
+                    
+                    // Add new characters
+                    if (column.nextChar <= 0) {
+                        column.chars.unshift({
+                            char: this.settings.chars[Math.floor(Math.random() * this.settings.chars.length)],
+                            age: 0,
+                            brightness: 1,
+                            color: this.getRandomColor()
+                        });
+                        column.nextChar = Math.random() * 30 + 10;
+                    } else {
+                        column.nextChar--;
+                    }
+                    
+                    // Update characters
+                    column.chars.forEach((char, index) => {
+                        char.age++;
+                        char.brightness = Math.max(0, 1 - (char.age / 40));
+                        
+                        // Randomly change character
+                        if (Math.random() < 0.15) {
+                            char.char = this.settings.chars[Math.floor(Math.random() * this.settings.chars.length)];
+                        }
+                    });
+                    
+                    // Remove old characters
+                    column.chars = column.chars.filter(char => char.brightness > 0);
+                    
+                    // Reset column if it goes off screen
+                    if (column.y > this.canvas.height + 100) {
+                        column.y = -100;
+                        column.chars = [];
+                        column.opacity = Math.random() * 0.5 + 0.5;
+                    }
+                });
+            }
+            
+            draw() {
+                // Clear canvas with fade effect
+                this.ctx.fillStyle = `rgba(0, 0, 0, ${0.05 * this.settings.brightness})`;
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Set font
+                this.ctx.font = `${this.settings.fontSize}px 'Courier New', monospace`;
+                this.ctx.textAlign = 'center';
+                
+                // Draw columns
+                this.settings.columns.forEach((column, columnIndex) => {
+                    column.chars.forEach((char, index) => {
+                        const alpha = char.brightness * this.settings.brightness * column.opacity;
+                        
+                        // Xen kẽ màu hồng đậm và hồng nhạt theo cột
+                        let color;
+                        if (columnIndex % 2 === 0) {
+                            color = { r: 255, g: 20, b: 147 }; // Deep Pink
+                        } else {
+                            color = { r: 255, g: 105, b: 180 }; // Hot Pink
+                        }
+                        
+                        const colorStr = `rgba(${color.r}, ${color.g}, ${color.b}, ${alpha})`;
+                        
+                        this.ctx.fillStyle = colorStr;
+                        this.ctx.fillText(
+                            char.char,
+                            column.x + this.settings.fontSize / 2,
+                            column.y - index * this.settings.fontSize
+                        );
+                    });
+                });
+            }
+            
+            getRandomColor() {
+                const colors = [
+                    { r: 255, g: 20, b: 147 },   // Deep Pink
+                    { r: 255, g: 105, b: 180 },  // Hot Pink
+                    { r: 255, g: 20, b: 147 },   // Deep Pink
+                    { r: 255, g: 105, b: 180 },  // Hot Pink
+                ];
+                return colors[Math.floor(Math.random() * colors.length)];
+            }
+            
+            hslToRgb(h, s, l) {
+                h /= 360;
+                s /= 100;
+                l /= 100;
+                
+                const c = (1 - Math.abs(2 * l - 1)) * s;
+                const x = c * (1 - Math.abs((h * 6) % 2 - 1));
+                const m = l - c / 2;
+                
+                let r, g, b;
+                
+                if (h < 1/6) {
+                    r = c; g = x; b = 0;
+                } else if (h < 2/6) {
+                    r = x; g = c; b = 0;
+                } else if (h < 3/6) {
+                    r = 0; g = c; b = x;
+                } else if (h < 4/6) {
+                    r = 0; g = x; b = c;
+                } else if (h < 5/6) {
+                    r = x; g = 0; b = c;
+                } else {
+                    r = c; g = 0; b = x;
+                }
+                
+                return {
+                    r: Math.round((r + m) * 255),
+                    g: Math.round((g + m) * 255),
+                    b: Math.round((b + m) * 255)
+                };
+            }
+            
+            updateSettings(newSettings) {
+                this.settings = { ...this.settings, ...newSettings };
+                if (newSettings.density !== undefined) {
+                    this.setupColumns();
+                }
+            }
+            
+            toggleFullscreen() {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen();
+                } else {
+                    document.exitFullscreen();
+                }
+            }
         }
         
-        const interval = setInterval(draw, 33);
+        // ============================================================================
+        // GLOBAL VARIABLES AND FUNCTIONS
+        // ============================================================================
         
-        // Tạo hiệu ứng trái tim bay
-        function createFloatingHeart() {
-            const heart = document.createElement('div');
-            heart.className = 'heart';
-            heart.innerHTML = '♥';
-            heart.style.left = Math.random() * 100 + '%';
-            heart.style.animationDelay = Math.random() * 2 + 's';
-            heart.style.animationDuration = (Math.random() * 3 + 4) + 's';
-            document.getElementById('floating-hearts').appendChild(heart);
-            
-            setTimeout(() => {
-                heart.remove();
-            }, 6000);
-        }
+        let matrixEffect = null;
         
-        // Tạo trái tim bay mỗi 500ms
-        setInterval(createFloatingHeart, 500);
-
-        // Bắt đầu hiệu ứng text animation sau 2 giây
-        setTimeout(() => {
-            textAnim.animate("20|10|♥|PHỤ|NỮ|VIỆT|NAM");
-        }, 2000);
+        // Get elements
+        const canvas = document.getElementById('matrixCanvas');
         
-        window.addEventListener('resize', () => {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            const newCols = Math.floor(canvas.width / fontSize);
-            while (drops.length < newCols) drops.push({ y: Math.floor(Math.random() * -50), offset: Math.random() * Math.PI * 2, speed: 0.5 + Math.random() * 0.5 });
-            while (drops.length > newCols) drops.pop();
-        });
+        // Initialize and start immediately
+        matrixEffect = new MyMatrixEffect(canvas);
+        matrixEffect.start();
     </script>
 </body>
 </html>
