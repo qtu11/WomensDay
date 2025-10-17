@@ -11,9 +11,52 @@
             box-sizing: border-box;
         }
         body {
-            background: #000;
+            background: linear-gradient(135deg, #ffeef8, #fce4ec, #f8bbd9, #f48fb1);
             overflow: hidden;
             font-family: 'Courier New', monospace;
+            animation: backgroundShift 10s ease-in-out infinite alternate;
+        }
+        
+        @keyframes backgroundShift {
+            0% { background: linear-gradient(135deg, #ffeef8, #fce4ec, #f8bbd9, #f48fb1); }
+            50% { background: linear-gradient(135deg, #fce4ec, #f8bbd9, #f48fb1, #e91e63); }
+            100% { background: linear-gradient(135deg, #f8bbd9, #f48fb1, #e91e63, #ad1457); }
+        }
+        
+        /* Hiệu ứng trái tim bay */
+        .floating-hearts {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+        
+        .heart {
+            position: absolute;
+            color: #e91e63;
+            font-size: 20px;
+            animation: float 6s infinite linear;
+            opacity: 0.7;
+        }
+        
+        @keyframes float {
+            0% {
+                transform: translateY(100vh) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.7;
+            }
+            90% {
+                opacity: 0.7;
+            }
+            100% {
+                transform: translateY(-100px) rotate(360deg);
+                opacity: 0;
+            }
         }
         canvas {
             display: block;
@@ -21,55 +64,40 @@
             height: 100vh;
             transition: opacity 2s ease-out;
         }
-        #intro-container {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 10;
-            text-align: center;
-            color: #fff;
-            opacity: 0;
-            transition: opacity 1s ease-in;
-        }
-        #intro-msg {
-            font-size: 48px;
-            text-shadow: 0 0 15px #ff1493, 0 0 30px #ffb6c1, 0 0 45px #ffd700;
-            animation: glow 2s infinite alternate;
-        }
-        @keyframes glow {
-            from { text-shadow: 0 0 15px #ff1493, 0 0 30px #ffb6c1; }
-            to { text-shadow: 0 0 30px #ffb6c1, 0 0 45px #ffd700; }
-        }
-        #skip-btn {
-            margin-top: 20px;
-            padding: 10px 20px;
-            background: linear-gradient(45deg, #ff1493, #800080);
-            border: none;
-            color: white;
-            font-size: 18px;
-            cursor: pointer;
-            border-radius: 5px;
-            opacity: 0.8;
-        }
-        #skip-btn:hover {
-            opacity: 1;
+        
+        #text-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 5;
+            pointer-events: none;
         }
     </style>
 </head>
 <body>
+    <div class="floating-hearts" id="floating-hearts"></div>
     <canvas id="c"></canvas>
-    <div id="intro-container">
-        <div id="intro-msg">CHÚC MỪNG 20/10 ♥</div>
-        <button id="skip-btn" onclick="transitionToMain()">Tiếp tục...</button>
-    </div>
+    <canvas id="text-canvas"></canvas>
     <audio id="bg-music" autoplay loop>
         <source src="https://freesound.org/data/previews/171/171104_3051519-lq.mp3" type="audio/mpeg">
         <!-- Nhạc piano nhẹ từ freesound.org, thay bằng link nhạc thực tế nếu cần -->
     </audio>
+    <!-- Tích hợp file text-animation.js -->
+    <script src="text-animation.js"></script>
+    
     <script>
+        // Khởi tạo các canvas
         const canvas = document.getElementById('c');
         const ctx = canvas.getContext('2d');
+        
+        // Khởi tạo text animation bằng hàm tiện ích
+        const textAnim = createTextAnimation('#text-canvas', {
+            dotColor: { r: 233, g: 30, b: 99, a: 0.8 }, // Màu hồng
+            fontSize: 250,
+            fontFamily: 'Arial, sans-serif', // Font hỗ trợ tiếng Việt tốt hơn
+            gap: 10, // Tăng gap một chút
+            dotSize: 3 // Thu nhỏ chấm tròn
+        });
         
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
@@ -78,32 +106,20 @@
         const fontSize = 14;
         const cols = Math.floor(canvas.width / fontSize);
         const drops = Array(cols).fill(0).map(() => ({
-            y: Math.floor(Math.random() * -50),
+            y: Math.floor(Math.random() * -50), // Bắt đầu từ trên màn hình
             offset: Math.random() * Math.PI * 2,
             speed: 0.5 + Math.random() * 0.5
         }));
         
-        // Tạo gradient màu lung linh
+        // Tạo gradient màu lung linh (từ trên xuống)
         const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-        gradient.addColorStop(0, '#ff1493'); // Hồng
-        gradient.addColorStop(0.5, '#800080'); // Tím
-        gradient.addColorStop(1, '#ffd700'); // Vàng nhạt
+        gradient.addColorStop(0, '#ffd700'); // Vàng nhạt (trên)
+        gradient.addColorStop(0.5, '#800080'); // Tím (giữa)
+        gradient.addColorStop(1, '#ff1493'); // Hồng (dưới)
         
-        // Hạt hoa hồng (emoji 🌹)
-        const particles = [];
-        function createParticle() {
-            particles.push({
-                x: Math.random() * canvas.width,
-                y: -10,
-                size: 10 + Math.random() * 5, // Kích thước lớn hơn một chút cho emoji
-                speed: 0.5 + Math.random(),
-                angle: Math.random() * Math.PI * 2
-            });
-        }
-        setInterval(createParticle, 200); // Tạo hạt mỗi 200ms
 
         function draw() {
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillStyle = 'rgba(255, 240, 248, 0.08)';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.font = fontSize + 'px Courier New';
             ctx.shadowColor = '#ff1493';
@@ -117,60 +133,47 @@
                 const x = i * fontSize + Math.sin(angle) * fontSize * 3;
                 const y = drops[i].y * fontSize;
                 
-                // Hình trái tim "thở"
-                const heartX = canvas.width / 2;
-                const heartY = canvas.height / 2;
-                const scale = 0.5 + 0.1 * Math.sin(Date.now() / 1000);
-                const dx = (x - heartX) / (canvas.width / 4 * scale);
-                const dy = (y - heartY) / (canvas.height / 4 * scale);
-                const dist = Math.sqrt(dx * dx + dy * dy);
-                if (dist < 0.5 || dist > 0.7) {
-                    ctx.fillText(char, x, y);
-                }
+                // Hiển thị chữ bình thường
+                ctx.fillText(char, x, y);
                 
-                drops[i].y += drops[i].speed;
+                drops[i].y += drops[i].speed; // Rơi từ trên xuống
                 drops[i].offset += 0.05;
                 
                 if (y > canvas.height && Math.random() > 0.975) {
-                    drops[i].y = 0;
+                    drops[i].y = Math.floor(Math.random() * -50);
                     drops[i].offset = Math.random() * Math.PI * 2;
                     drops[i].speed = 0.5 + Math.random() * 0.5;
                 }
             }
             
-            // Vẽ hoa hồng emoji
-            ctx.font = '15px Arial'; // Font hỗ trợ emoji
-            ctx.fillStyle = '#ff4040'; // Màu hoa hồng
-            for (let i = particles.length - 1; i >= 0; i--) {
-                const p = particles[i];
-                ctx.fillText('🌹', p.x, p.y); // Không xoay, giữ thẳng
-                p.y += p.speed;
-                p.x += Math.sin(p.angle) * 0.5;
-                p.angle += 0.1;
-                if (p.y > canvas.height) particles.splice(i, 1);
-            }
             
             ctx.shadowBlur = 0; // Tắt glow
         }
         
         const interval = setInterval(draw, 33);
         
-        // Hiện thông điệp lớn
-        setTimeout(() => {
-            document.getElementById('intro-container').style.opacity = 1;
-        }, 5000);
-
-        // Chuyển tiếp
-        function transitionToMain() {
-            canvas.style.opacity = 0;
-            document.getElementById('bg-music').pause();
-            clearInterval(interval);
+        // Tạo hiệu ứng trái tim bay
+        function createFloatingHeart() {
+            const heart = document.createElement('div');
+            heart.className = 'heart';
+            heart.innerHTML = '♥';
+            heart.style.left = Math.random() * 100 + '%';
+            heart.style.animationDelay = Math.random() * 2 + 's';
+            heart.style.animationDuration = (Math.random() * 3 + 4) + 's';
+            document.getElementById('floating-hearts').appendChild(heart);
+            
             setTimeout(() => {
-                window.location.href = 'main.html'; // Thay bằng URL phần lời chúc
-            }, 2000);
+                heart.remove();
+            }, 6000);
         }
+        
+        // Tạo trái tim bay mỗi 500ms
+        setInterval(createFloatingHeart, 500);
 
-        setTimeout(transitionToMain, 10000);
+        // Bắt đầu hiệu ứng text animation sau 2 giây
+        setTimeout(() => {
+            textAnim.animate("20|10|♥|PHỤ|NỮ|VIỆT|NAM");
+        }, 2000);
         
         window.addEventListener('resize', () => {
             canvas.width = window.innerWidth;
