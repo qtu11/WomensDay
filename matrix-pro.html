@@ -12,8 +12,8 @@
         }
         
         body {
-            background: #000;
-            color: #0f0;
+            background: linear-gradient(135deg, #ffeef8, #f8e8ff, #fff0f5, #f0e6ff);
+            color: #d63384;
             font-family: 'Courier New', monospace;
             overflow: hidden;
             height: 100vh;
@@ -23,7 +23,12 @@
             position: relative;
             width: 100vw;
             height: 100vh;
-            background: linear-gradient(45deg, #000, #001100, #000);
+            background: linear-gradient(135deg, 
+                rgba(255, 240, 245, 0.9), 
+                rgba(248, 232, 255, 0.9), 
+                rgba(255, 238, 248, 0.9), 
+                rgba(240, 230, 255, 0.9));
+            backdrop-filter: blur(1px);
         }
         
         #matrixCanvas {
@@ -58,7 +63,7 @@
                 
                 // Effect settings
                 this.settings = {
-                    speed: 1.5, // Tốc độ nhanh
+                    speed: 1.8, // Tốc độ vừa phải
                     density: 0.8,
                     brightness: 0.8,
                     fontSize: 18,
@@ -94,7 +99,7 @@
                     this.settings.columns.push({
                         x: i * this.settings.fontSize,
                         y: Math.random() * this.canvas.height,
-                        speed: Math.random() * 2 + 1,
+                        speed: Math.random() * 2.5 + 1.5, // Tốc độ vừa phải
                         chars: [],
                         nextChar: Math.random() * 50,
                         opacity: Math.random() * 0.5 + 0.5
@@ -162,7 +167,7 @@
                     // Update column position
                     column.y += column.speed * this.settings.speed;
                     
-                    // Add new characters
+                    // Add new characters - tạo ký tự mới thường xuyên hơn
                     if (column.nextChar <= 0) {
                         column.chars.unshift({
                             char: this.settings.chars[Math.floor(Math.random() * this.settings.chars.length)],
@@ -170,15 +175,15 @@
                             brightness: 1,
                             color: this.getRandomColor()
                         });
-                        column.nextChar = Math.random() * 30 + 10;
+                        column.nextChar = Math.random() * 10 + 3; // Giảm khoảng cách giữa các ký tự hơn nữa
                     } else {
                         column.nextChar--;
                     }
                     
-                    // Update characters
+                    // Update characters - ký tự sống lâu hơn
                     column.chars.forEach((char, index) => {
                         char.age++;
-                        char.brightness = Math.max(0, 1 - (char.age / 40));
+                        char.brightness = Math.max(0, 1 - (char.age / 120)); // Tăng lên 120 để ký tự sống lâu hơn nữa
                         
                         // Randomly change character
                         if (Math.random() < 0.15) {
@@ -189,9 +194,9 @@
                     // Remove old characters
                     column.chars = column.chars.filter(char => char.brightness > 0);
                     
-                    // Reset column if it goes off screen
-                    if (column.y > this.canvas.height + 100) {
-                        column.y = -100;
+                    // Reset column if it goes off screen - reset xa hơn để cột dài hơn
+                    if (column.y > this.canvas.height + 300) {
+                        column.y = -300; // Bắt đầu từ xa hơn nữa
                         column.chars = [];
                         column.opacity = Math.random() * 0.5 + 0.5;
                     }
@@ -199,8 +204,8 @@
             }
             
             draw() {
-                // Clear canvas with fade effect
-                this.ctx.fillStyle = `rgba(0, 0, 0, ${0.05 * this.settings.brightness})`;
+                // Clear canvas with fade effect - sử dụng màu trắng nhạt cho background sáng
+                this.ctx.fillStyle = `rgba(255, 240, 245, ${0.08 * this.settings.brightness})`;
                 this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
                 
                 // Set font
@@ -215,9 +220,9 @@
                         // Xen kẽ màu hồng đậm và hồng nhạt theo cột
                         let color;
                         if (columnIndex % 2 === 0) {
-                            color = { r: 255, g: 20, b: 147 }; // Deep Pink
+                            color = { r: 220, g: 38, b: 127 }; // Hồng đậm (Rose Pink)
                         } else {
-                            color = { r: 255, g: 105, b: 180 }; // Hot Pink
+                            color = { r: 255, g:182, b: 193 }; // Hồng nhạt (Light Pink)
                         }
                         
                         const colorStr = `rgba(${color.r}, ${color.g}, ${color.b}, ${alpha})`;
@@ -234,10 +239,12 @@
             
             getRandomColor() {
                 const colors = [
-                    { r: 255, g: 20, b: 147 },   // Deep Pink
-                    { r: 255, g: 105, b: 180 },  // Hot Pink
-                    { r: 255, g: 20, b: 147 },   // Deep Pink
-                    { r: 255, g: 105, b: 180 },  // Hot Pink
+                    { r: 220, g: 38, b: 127 },   // Hồng đậm (Rose Pink)
+                    { r: 255, g: 182, b: 193 },  // Hồng nhạt (Light Pink)
+                    { r: 255, g: 20, b: 147 },   // Hồng đậm (Deep Pink)
+                    { r: 255, g:192, b: 203 },     // Hồng nhạt (Pink)
+                    { r: 255, g: 105, b: 180 },  // Hồng đậm (Hot Pink)
+                    { r: 255, g: 218, b: 185 },  // Hồng nhạt (Peach Puff)
                 ];
                 return colors[Math.floor(Math.random() * colors.length)];
             }
