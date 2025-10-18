@@ -50,10 +50,38 @@
             pointer-events: none;
         }
         
+        .banner {
+            position: absolute;
+            top: -17vh;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 5;
+            width: 300px;
+            height: auto;
+        }
+        
+        /* Desktop - màn hình lớn */
+        @media (min-width: 1024px) {
+            .banner {
+                top: -10vh;
+            }
+        }
+        
+        /* Tablet/Mobile xoay ngang - màn hình nhỏ hơn */
+        @media (max-width: 1023px) {
+            .banner {
+                top: -17vh;
+            }
+        }
+        
+        
         
     </style>
 </head>
 <body>
+    <!-- Banner -->
+    <img src="/assets/banner.png" alt="Banner" class="banner">
+    
     <div class="container">
         <canvas id="matrixCanvas"></canvas>
         <canvas id="textCanvas"></canvas>
@@ -218,6 +246,11 @@
                 if (this.updateHearts) {
                     this.updateHearts();
                 }
+                
+                // Cập nhật icon top
+                if (this.updateTopIcons) {
+                    this.updateTopIcons();
+                }
             }
             
             draw() {
@@ -258,6 +291,9 @@
             drawHeartsClean() {
                 if (this.drawHearts) {
                     this.drawHearts();
+                }
+                if (this.drawTopIcons) {
+                    this.drawTopIcons();
                 }
             }
             
@@ -338,6 +374,10 @@
         matrixEffect.hearts = [];
         matrixEffect.icons = ['❤️', '💌']; // Trái tim và lá thư
         
+        // Thêm icon trang trí ở top
+        matrixEffect.topIcons = [];
+        matrixEffect.topIconTypes = ['✨', '💫', '🌟', '⭐', '💖', '🌸', '🌺', '🌷'];
+        
         // Tạo icon mới (trái tim hoặc lá thư)
         matrixEffect.createHeart = function() {
             const heart = {
@@ -351,6 +391,23 @@
                 icon: this.icons[Math.floor(Math.random() * this.icons.length)] // Random giữa trái tim và lá thư
             };
             this.hearts.push(heart);
+        };
+        
+        // Tạo icon trang trí ở top
+        matrixEffect.createTopIcon = function() {
+            const topIcon = {
+                x: Math.random() * this.canvas.width,
+                y: Math.random() * 100 + 20, // Ở phần trên đầu
+                vx: (Math.random() - 0.5) * 0.3, // Chuyển động ngang nhẹ
+                vy: (Math.random() - 0.5) * 0.3, // Chuyển động dọc nhẹ
+                size: Math.random() * 12 + 10, // Kích thước vừa phải
+                life: 1.0,
+                decay: Math.random() * 0.001 + 0.0005, // Sống lâu hơn
+                pulse: Math.random() * Math.PI * 2,
+                pulseSpeed: Math.random() * 0.03 + 0.01,
+                icon: this.topIconTypes[Math.floor(Math.random() * this.topIconTypes.length)]
+            };
+            this.topIcons.push(topIcon);
         };
         
         // Cập nhật trái tim
@@ -377,6 +434,33 @@
             }
         };
         
+        // Cập nhật icon top
+        matrixEffect.updateTopIcons = function() {
+            for (let i = this.topIcons.length - 1; i >= 0; i--) {
+                const topIcon = this.topIcons[i];
+                
+                // Cập nhật vị trí - lơ lửng nhẹ
+                topIcon.x += topIcon.vx;
+                topIcon.y += topIcon.vy;
+                
+                // Cập nhật pulse
+                topIcon.pulse += topIcon.pulseSpeed;
+                
+                // Giảm life
+                topIcon.life -= topIcon.decay;
+                
+                // Xóa icon khi hết life
+                if (topIcon.life <= 0) {
+                    this.topIcons.splice(i, 1);
+                }
+            }
+            
+            // Tạo icon top mới ngẫu nhiên
+            if (Math.random() < 0.01 && this.topIcons.length < 8) {
+                this.createTopIcon();
+            }
+        };
+        
         // Vẽ icon (trái tim và lá thư)
         matrixEffect.drawHearts = function() {
             this.hearts.forEach(heart => {
@@ -389,6 +473,22 @@
                 this.ctx.textBaseline = 'middle';
                 this.ctx.fillStyle = `rgba(220, 38, 127, ${alpha * 1.2})`; // Tăng độ sáng
                 this.ctx.fillText(heart.icon, heart.x, heart.y);
+            });
+        };
+        
+        // Vẽ icon top
+        matrixEffect.drawTopIcons = function() {
+            this.topIcons.forEach(topIcon => {
+                const alpha = topIcon.life;
+                const size = topIcon.size;
+                const pulseScale = 1 + Math.sin(topIcon.pulse) * 0.1;
+                
+                // Vẽ icon top với hiệu ứng pulse nhẹ
+                this.ctx.font = `${size * pulseScale}px Arial, sans-serif`;
+                this.ctx.textAlign = 'center';
+                this.ctx.textBaseline = 'middle';
+                this.ctx.fillStyle = `rgba(255, 182, 193, ${alpha})`; // Màu hồng nhạt
+                this.ctx.fillText(topIcon.icon, topIcon.x, topIcon.y);
             });
         };
     </script>
