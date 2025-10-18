@@ -516,12 +516,12 @@
                 this.canvas = document.querySelector(canvasSelector);
                 this.context = this.canvas.getContext('2d');
                 this.options = {
-                    gap: 10,
+                    gap: 4,
                     fontSize: 500,
                     fontFamily: 'Avenir, Helvetica Neue, Helvetica, Arial, sans-serif',
                     dotColor: { r: 220, g: 38, b: 127, a: 1 }, // Màu hồng đậm
                     animationSpeed: 0.14,
-                    dotSize: 3.5,
+                    dotSize: 2,
                     ...options
                 };
                 
@@ -787,13 +787,13 @@
                     
                     if (this.dots[d].s) {
                         this.dots[d].move({
-                            z: Math.random() * 20 + 10,
+                            z: Math.random() * this.options.dotSize * 4 + this.options.dotSize * 2,
                             a: Math.random(),
                             h: 18
                         });
                     } else {
                         this.dots[d].move({
-                            z: Math.random() * 5 + 5,
+                            z: Math.random() * this.options.dotSize * 2 + this.options.dotSize,
                             h: fast ? 18 : 30
                         });
                     }
@@ -803,7 +803,7 @@
                         x: dotsCopy[i].x + this.cx,
                         y: dotsCopy[i].y + this.cy,
                         a: 1,
-                        z: 5,
+                        z: this.options.dotSize,
                         h: 0
                     });
 
@@ -815,7 +815,7 @@
                 for (let i = d; i < this.dots.length; i++) {
                     if (this.dots[i].s) {
                         this.dots[i].move({
-                            z: Math.random() * 20 + 10,
+                            z: Math.random() * this.options.dotSize * 4 + this.options.dotSize * 2,
                             a: Math.random(),
                             h: 20
                         });
@@ -825,7 +825,7 @@
                             x: Math.random() * area.w,
                             y: Math.random() * area.h,
                             a: 0.3,
-                            z: Math.random() * 4,
+                            z: Math.random() * this.options.dotSize * 2,
                             h: 0
                         });
                     }
@@ -900,8 +900,8 @@
             textAnimation = new TextAnimation('#textCanvas', {
                 dotColor: { r: 220, g: 38, b: 127, a: 1 }, // Màu hồng đậm
                 fontSize: 400,
-                dotSize: 3.5,
-                gap: 10
+                dotSize: 2,
+                gap: 4
             });
             
             // Chạy animation với text "Happy | Womens Day | 20-10" lặp 3 lần
@@ -911,7 +911,7 @@
     </script>
 
     <!-- Fireworks Effect Script -->
-    <script src="firework.js"></script>
+    <script src="effects/firework.js"></script>
     <script>
         // Khởi tạo fireworks effect
         let fireworksEffect = null;
