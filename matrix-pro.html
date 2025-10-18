@@ -70,6 +70,12 @@
             height: auto;
         }
         
+        @keyframes fadeInHint {
+            0% { opacity: 0; }
+            50% { opacity: 1; }
+            100% { opacity: 0.7; }
+        }
+        
         /* Desktop - màn hình lớn */
         @media (min-width: 1024px) {
             .banner {
@@ -91,6 +97,7 @@
 <body>
     <!-- Banner -->
     <img src="/assets/banner.png" alt="Banner" class="banner">
+    
     
     <div class="container">
         <canvas id="matrixCanvas"></canvas>
@@ -173,6 +180,18 @@
                             if (document.fullscreenElement) {
                                 document.exitFullscreen();
                             }
+                            break;
+                        case 'Enter':
+                            // Cho phép chuyển sang trang flower ngay lập tức
+                            e.preventDefault();
+                            console.log('🎉 Manual redirect to flower page...');
+                            document.body.style.transition = 'opacity 1s ease-out';
+                            document.body.style.opacity = '0';
+                            setTimeout(function() {
+                                // Đánh dấu rằng đây là auto redirect hợp lệ từ matrix
+                                sessionStorage.setItem('matrixRedirect', 'true');
+                                window.location.href = 'flower.html';
+                            }, 1000);
                             break;
                     }
                 });
@@ -904,9 +923,26 @@
                 gap: 4
             });
             
-            // Chạy animation với text "Happy | Womens Day | 20-10" lặp 3 lần
-            const textSequence = 'Chúc mừng|Ngày Phụ Nữ|Việt Nam|20-10|Chúc mừng|Ngày Phụ Nữ|Việt Nam|20-10|Chúc mừng|Ngày Phụ Nữ|Việt Nam|20-10';
+            // Chạy animation với text chỉ 1 lượt, sau đó tự động chuyển trang
+            const textSequence = 'Chúc mừng|Ngày Phụ Nữ|Việt Nam|20-10';
             textAnimation.animate(textSequence);
+            
+            // Tự động chuyển sang trang flower sau khi animation hoàn thành (chỉ 1 lượt)
+            // Tính toán: 4 phần text × 2.5 giây/phần = 10 giây + thêm 1 giây buffer
+            setTimeout(function() {
+                console.log('🎉 Text animation completed! Redirecting to flower page...');
+                
+                // Thêm hiệu ứng fade out trước khi chuyển trang
+                document.body.style.transition = 'opacity 1s ease-out';
+                document.body.style.opacity = '0';
+                
+                // Chuyển trang sau khi fade out
+                setTimeout(function() {
+                    // Đánh dấu rằng đây là auto redirect hợp lệ từ matrix
+                    sessionStorage.setItem('matrixRedirect', 'true');
+                    window.location.href = 'flower.html';
+                }, 1000);
+            }, 11000); // 10s animation + 1s buffer = 11s
         });
     </script>
 
